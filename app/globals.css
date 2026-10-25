@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Tambahan biar geserannya mulus kayak aplikasi */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Biar pas di-scroll, judulnya nggak ketutup menu atas */
+section[id] {
+  scroll-margin-top: 80px;
+}
+
+body {
+  background-color: white;
+  color: black;
+}
