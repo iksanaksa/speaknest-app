@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
+import { supabase } from "@/lib/supabase"; // Import Supabase
 
 const questions = [
   {
@@ -23,6 +24,8 @@ export default function ReadingTestPage() {
   const [selectedAnswers, setSelectedAnswers] = useState<{ [key: number]: number }>({});
   const [submitted, setSubmitted] = useState(false);
   const [score, setScore] = useState(0);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState("");
 
   const handleSelect = (qId: number, optIndex: number) => {
     if (!submitted) {
@@ -30,13 +33,47 @@ export default function ReadingTestPage() {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    // 1. Hitung skor
     let correct = 0;
     questions.forEach((q) => {
       if (selectedAnswers[q.id] === q.answer) correct++;
     });
+    
     setScore(correct);
     setSubmitted(true);
+    setIsSaving(true);
+
+    // 2. Simpan ke Supabase
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        // Kalau user login, simpan ke database
+        const { error } = await supabase
+          .from('practice_scores')
+          .insert([
+            { user_id: user.id, score: correct, total_questions: questions.length }
+          ]);
+        
+        if (error) throw error;
+        setSaveMessage("Skor berhasil disimpan ke database!");
+      } else {
+        // Kalau belum login, kasih tau untuk login
+        setSaveMessage("Kamu belum login. Skor hanya disimpan sementara.");
+      }
+    } catch (error) {
+      console.error(error);
+      setSaveMessage("Gagal menyimpan skor.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const resetTest = () => {
+    setSubmitted(false);
+    setSelectedAnswers({});
+    setSaveMessage("");
   };
 
   return (
@@ -48,12 +85,10 @@ export default function ReadingTestPage() {
         <h1 className="text-2xl font-bold text-slate-900 mb-2">Reading Practice: The History of Pizza</h1>
         <p className="text-slate-600 mb-8">Read the text below and answer the questions.</p>
 
-        {/* Teks Bacaan */}
         <div className="rounded-2xl bg-slate-50 p-6 text-slate-800 leading-relaxed mb-8">
           <p>Pizza is one of the world's most popular foods. Although it is often associated with American fast food, its origins can be traced back to Naples, Italy. In the 18th century, flatbreads with toppings were sold on the streets of Naples to poor workers. Later, in 1889, a famous pizza maker created a special pizza for the Queen of Italy, Margherita, using tomatoes, mozzarella, and basil to represent the colors of the Italian flag. Today, pizza has evolved into many different styles around the globe.</p>
         </div>
 
-        {/* Soal-soal */}
         <div className="space-y-6">
           {questions.map((q) => (
             <div key={q.id} className="rounded-xl border border-slate-200 p-5">
@@ -84,7 +119,6 @@ export default function ReadingTestPage() {
           ))}
         </div>
 
-        {/* Tombol & Hasil */}
         <div className="mt-8">
           {!submitted ? (
             <button 
@@ -92,13 +126,18 @@ export default function ReadingTestPage() {
               disabled={Object.keys(selectedAnswers).length < questions.length}
               className="w-full rounded-xl bg-brand-500 py-3 font-bold text-white hover:bg-brand-600 disabled:opacity-50"
             >
-              Cek Jawaban
+              Cek Jawaban & Simpan Skor
             </button>
           ) : (
             <div className="rounded-xl bg-brand-50 border border-brand-200 p-6 text-center">
               <h2 className="text-2xl font-bold text-brand-800">Skor Kamu: {score} / {questions.length}</h2>
-              <p className="text-brand-600 mt-2">Kerja bagus! Terus berlatih ya.</p>
-              <button onClick={() => { setSubmitted(false); setSelectedAnswers({}); }} className="mt-4 text-sm font-semibold text-brand-700 underline">
+              
+              {/* Pesan Status Simpan */}
+              <p className={`mt-2 text-sm font-medium ${isSaving ? 'text-slate-500' : 'text-brand-600'}`}>
+                {isSaving ? "Menyimpan..." : saveMessage}
+              </p>
+
+              <button onClick={resetTest} className="mt-4 text-sm font-semibold text-brand-700 underline">
                 Ulangi Tes
               </button>
             </div>
