@@ -3,12 +3,14 @@
 import { useState } from "react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
+import { supabase } from "@/lib/supabase"; // Import Supabase
 
 export default function WritingPage() {
   const [essay, setEssay] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState("");
+  const [saveStatus, setSaveStatus] = useState("");
 
   const handleSubmit = async () => {
     if (essay.length < 50) {
@@ -19,8 +21,10 @@ export default function WritingPage() {
     setLoading(true);
     setError("");
     setResult(null);
+    setSaveStatus("");
 
     try {
+      // 1. Minta Feedback ke AI
       const res = await fetch("/api/writing", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -31,6 +35,29 @@ export default function WritingPage() {
       if (!res.ok) throw new Error(data.error);
       
       setResult(data);
+
+      // 2. Simpan ke Database Supabase
+      setSaveStatus("Menyimpan ke database...");
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        const { error: dbError } = await supabase
+          .from("writing_scores")
+          .insert([
+            {
+              user_id: user.id,
+              essay_text: essay,
+              band_score: data.bandScore,
+              feedback_json: data,
+            }
+          ]);
+          
+        if (dbError) throw dbError;
+        setSaveStatus("✅ Skor berhasil disimpan ke progress!");
+      } else {
+        setSaveStatus("Kamu belum login, skor tidak disimpan permanen.");
+      }
+
     } catch (err: any) {
       setError(err.message || "Terjadi kesalahan.");
     } finally {
@@ -60,6 +87,7 @@ export default function WritingPage() {
         </div>
 
         {error && <div className="text-sm text-red-600 bg-red-50 p-3 rounded-lg mb-4">{error}</div>}
+        {saveStatus && <div className="text-sm text-brand-700 bg-brand-50 p-3 rounded-lg mb-4 font-semibold">{saveStatus}</div>}
 
         <button
           onClick={handleSubmit}
