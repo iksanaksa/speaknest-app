@@ -12,7 +12,7 @@ const links = [
   { label: "Tools", href: "/tools" },
   { label: "Games", href: "/games" },
   { label: "Guides", href: "/guides" },
-  { label: "Fitur", href: "/#fitur" },
+  { label: "Harga", href: "/pricing" }, // <-- Tambahan Baru
 ];
 export default function Navbar() {
   const [open, setOpen] = useState(false);
