@@ -11,6 +11,7 @@ const links = [
   { label: "Practice", href: "/#practice" },
   { label: "Tools", href: "/tools" },
   { label: "Games", href: "/games" },
+  { label: "Guides", href: "/guides" },
   { label: "Fitur", href: "/#fitur" },
 ];
 export default function Navbar() {
