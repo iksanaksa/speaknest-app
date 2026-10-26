@@ -6,11 +6,13 @@ import Logo from "./Logo";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 
-const links = [
-  { label: "Practice", href: "#practice" },
-  { label: "Fitur", href: "#fitur" },
-];
 
+const links = [
+  { label: "Practice", href: "/#practice" },
+  { label: "Tools", href: "/tools" },
+  { label: "Games", href: "/games" },
+  { label: "Fitur", href: "/#fitur" },
+];
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
