@@ -81,12 +81,16 @@ export default function ProgressPage() {
                 <div key={`${item.type}-${item.id}`} className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-6 shadow-sm hover:shadow-md transition">
                   <div className="flex items-center gap-4">
                     <div className="grid h-12 w-12 place-items-center rounded-xl bg-brand-50 text-2xl">
-                      {isReading ? "📖" : "✍️"}
+                      {isReading ? "📖" : item.feedback_json?.type === "speaking" ? "🎤" : "✍️"}
                     </div>
                     <div>
                       <h3 className="font-bold text-slate-900">
-                        {isReading ? "Reading: History of Pizza" : "Writing: AI Feedback"}
-                      </h3>
+                        {isReading 
+                         ? "Reading: History of Pizza" 
+                           : item.feedback_json?.type === "speaking" 
+                             ? "Speaking Simulation" 
+                           : "Writing: AI Feedback"}
+                       </h3>
                       <p className="text-sm text-slate-500">
                         {new Date(item.created_at).toLocaleDateString('id-ID', {
                           weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',

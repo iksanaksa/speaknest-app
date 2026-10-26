@@ -5,7 +5,7 @@ export default function Skills() {
     { icon: "🎧", title: "Listening", desc: "Latihan audio dengan transcript dan pembahasan.", href: "/practice/listening" },
     { icon: "📖", title: "Reading", desc: "Soal reading buatan sendiri, lengkap dengan alasannya.", href: "/practice/reading" },
     { icon: "✍️", title: "Writing", desc: "Tulis esai, dapat estimasi band + tips dari AI.", href: "/practice" },
-    { icon: "🎤", title: "Speaking", desc: "Rekam jawabanmu, dapat catatan kelancaran.", href: "/practice" },
+    { icon: "🎤", title: "Speaking", desc: "Rekam jawabanmu, dapat catatan kelancaran.", href: "/practice/speaking" },
   ];
 
   return (
