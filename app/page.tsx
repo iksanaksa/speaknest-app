@@ -19,21 +19,65 @@ export default function HomePage() {
 
   useEffect(() => {
     const checkUser = async () => {
-      // 1. Cek apakah ada user yang login
-      const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
+  // 1. Cek apakah ada user yang login
+  const { data: { session } } = await supabase.auth.getSession();
+  setUser(session?.user ?? null);
 
-      // 2. Kalau ada, ambil data profilnya dari tabel 'profiles'
-      if (session?.user) {
-        const { data } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", session.user.id)
-          .single();
-        setProfile(data);
+  // 2. Kalau ada, ambil data profilnya dari tabel 'profiles'
+  if (session?.user) {
+    const { data } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", session.user.id)
+      .single();
+      
+    if (data) {
+      // --- LOGIKA STREAK DIMULAI DI SINI ---
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Set ke jam 00:00 pagi ini
+      
+      let newStreak = data.streak || 0;
+      let shouldUpdate = false;
+
+      if (data.last_activity) {
+        const lastAct = new Date(data.last_activity);
+        lastAct.setHours(0, 0, 0, 0);
+        
+        // Hitung selisih hari
+        const diffDays = Math.round((today.getTime() - lastAct.getTime()) / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 1) {
+          // Aktif kemarin, berarti streak lanjut!
+          newStreak += 1;
+          shouldUpdate = true;
+        } else if (diffDays > 1) {
+          // Bolong lebih dari 1 hari, streak putus
+          newStreak = 1;
+          shouldUpdate = true;
+        }
+        // Kalau diffDays === 0, artinya dia udah buka hari ini, biarkan aja streak-nya
+      } else {
+        // Baru pertama kali buka
+        newStreak = 1;
+        shouldUpdate = true;
       }
-      setIsLoading(false);
-    };
+
+      // Kalau ada perubahan streak, update ke database
+      if (shouldUpdate) {
+        await supabase.from("profiles").update({ 
+          streak: newStreak, 
+          last_activity: new Date().toISOString() 
+        }).eq("id", session.user.id);
+        
+        data.streak = newStreak; // Update data lokal biar langsung kelihatan
+      }
+      // --- LOGIKA STREAK SELESAI ---
+
+      setProfile(data);
+    }
+  }
+  setIsLoading(false);
+};
     checkUser();
   }, []);
 
@@ -96,7 +140,7 @@ export default function HomePage() {
               <div className="text-3xl">🔥</div>
               <div>
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Streak</p>
-                <p className="text-xl font-black text-slate-800">1 Hari</p>
+                <p className="text-xl font-black text-slate-800">{profile?.streak || 1} Hari</p>
               </div>
             </div>
             <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex items-center gap-3">
