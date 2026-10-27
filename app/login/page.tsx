@@ -33,7 +33,7 @@ export default function LoginPage() {
       if (error) {
         setMessage("Gagal daftar: " + error.message);
       } else {
-        setMessage("Berhasil daftar! Silakan cek email kamu untuk verifikasi (atau langsung login jika verifikasi dimatikan).");
+        router.push("/onboarding");
       }
     }
     setLoading(false);
