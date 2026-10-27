@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import { supabase } from "@/lib/supabase"; // Import Supabase
-
+import { addXP } from "@/lib/xp";
 const questions = [
   {
     id: 1,
@@ -57,6 +57,7 @@ export default function ReadingTestPage() {
           ]);
         
         if (error) throw error;
+        await addXP(20);
         setSaveMessage("Skor berhasil disimpan ke database!");
       } else {
         // Kalau belum login, kasih tau untuk login

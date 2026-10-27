@@ -103,7 +103,7 @@ export default function HomePage() {
               <div className="text-3xl">⭐</div>
               <div>
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total XP</p>
-                <p className="text-xl font-black text-slate-800">0 XP</p>
+                <p className="text-xl font-black text-slate-800">{profile?.xp || 0} XP.</p>
               </div>
             </div>
           </div>
