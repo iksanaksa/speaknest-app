@@ -40,10 +40,23 @@ export default function LevelUpTest() {
       if (finalScore >= 2) {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-          // Naikkan level dari Pemula ke Menengah
-          await supabase.from("profiles").update({ current_level: "Menengah" }).eq("id", user.id);
+          // 1. Cek level user saat ini
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("current_level")
+            .eq("id", user.id)
+            .single();
+
+          // 2. Tentukan level selanjutnya
+          let nextLevel = "Menengah";
+          if (profile?.current_level === "Menengah") {
+            nextLevel = "Mahir";
+          }
+
+          // 3. Update level ke database
+          await supabase.from("profiles").update({ current_level: nextLevel }).eq("id", user.id);
+          alert(`Selamat! Skor kamu ${finalScore}/3. Kamu LULUS dan naik ke Level ${nextLevel}! 🎉`);
         }
-        alert(`Selamat! Skor kamu ${finalScore}/3. Kamu LULUS dan naik ke Level Menengah! 🎉`);
       } else {
         alert(`Skor kamu ${finalScore}/3. Belum lulus. Coba pelajari lagi modul sebelumnya ya.`);
       }
