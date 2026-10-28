@@ -5,28 +5,38 @@ import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import { supabase } from "@/lib/supabase";
 
+// Kita tambahin data level di sini
 const modules = [
-  { id: 1, title: "Kosakata Dasar", desc: "Belajar kata benda & kerja sehari-hari.", icon: "📚" },
-  { id: 2, title: "Grammar Sederhana", desc: "Pahami struktur kalimat dasar.", icon: "📝" },
-  { id: 3, title: "Reading Practice", desc: "Latih pemahaman bacaan.", icon: "📖" },
+  { id: 1, title: "Kosakata Dasar", desc: "Belajar kata benda & kerja sehari-hari.", icon: "📚", level: "Pemula" },
+  { id: 2, title: "Grammar Sederhana", desc: "Pahami struktur kalimat dasar.", icon: "📝", level: "Pemula" },
+  { id: 3, title: "Percakapan Sehari-hari", desc: "Belajar ngobrol di restoran / toko.", icon: "🗣️", level: "Menengah" },
+  { id: 4, title: "Reading Practice", desc: "Latih pemahaman bacaan.", icon: "📖", level: "Menengah" },
+  { id: 5, title: "Diskusi Topik Abstrak", desc: "Latihan opini & debat.", icon: "🧠", level: "Mahir" },
 ];
 
 export default function LearnPage() {
   const [completed, setCompleted] = useState<number[]>([]);
+  const [userLevel, setUserLevel] = useState("Pemula"); // Default
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchProgress = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { data } = await supabase
+        // Ambil data modul yang selesai
+        const { data: modData } = await supabase
           .from("completed_modules")
           .select("module_id")
           .eq("user_id", user.id);
-        
-        if (data) {
-          setCompleted(data.map((d) => d.module_id));
-        }
+        if (modData) setCompleted(modData.map((d) => d.module_id));
+
+        // Ambil level user dari profil
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("current_level")
+          .eq("id", user.id)
+          .single();
+        if (profileData?.current_level) setUserLevel(profileData.current_level);
       }
       setLoading(false);
     };
@@ -41,16 +51,27 @@ export default function LearnPage() {
       <main className="mx-auto max-w-lg px-5 py-10">
         <div className="text-center mb-10">
           <h1 className="text-3xl font-extrabold text-slate-900">Peta Belajar 🗺️</h1>
-          <p className="text-slate-500 mt-2">Selesaikan modul berurutan untuk membuka kunci berikutnya.</p>
+          <p className="text-slate-500 mt-2">Level kamu saat ini: <span className="font-bold text-brand-600">{userLevel}</span></p>
         </div>
 
         <div className="relative flex flex-col items-center gap-6 pb-20">
-          {/* Garis putus-putus di belakang */}
           <div className="absolute top-10 bottom-10 w-2 bg-slate-200 rounded-full z-0"></div>
 
           {modules.map((mod, index) => {
-            // Modul 1 selalu terbuka. Modul selanjutnya terbuka kalau modul sebelumnya udah selesai.
-            const isUnlocked = index === 0 || completed.includes(modules[index - 1].id);
+            // LOGIKA PINTAR: 
+            // 1. Kalau level user "Pemula", modul level "Menengah" & "Mahir" digembok.
+            // 2. Modul terbuka kalau modul sebelumnya udah selesai (kecuali modul pertama di levelnya).
+            
+            const isLevelLocked = 
+              (userLevel === "Pemula" && mod.level !== "Pemula") ||
+              (userLevel === "Menengah" && mod.level === "Mahir");
+
+            const prevModDone = index === 0 || completed.includes(modules[index - 1].id);
+            
+            // Modul pertama dari level user otomatis kebuka
+            const isFirstOfLevel = mod.level === userLevel && (index === 0 || modules[index - 1].level !== userLevel);
+            
+            const isUnlocked = !isLevelLocked && (prevModDone || isFirstOfLevel);
             const isDone = completed.includes(mod.id);
 
             return (
@@ -72,7 +93,7 @@ export default function LearnPage() {
                     <div>
                       <h3 className="font-bold text-slate-800 text-lg">{mod.title}</h3>
                       <p className="text-sm text-slate-500">{mod.desc}</p>
-                      {isDone && <p className="text-xs font-bold text-green-600 mt-1">Selesai (+50 XP)</p>}
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-brand-600 bg-brand-50 px-2 py-0.5 rounded-full mt-2 inline-block">{mod.level}</span>
                     </div>
                   </Link>
                 ) : (
@@ -82,7 +103,9 @@ export default function LearnPage() {
                     </div>
                     <div>
                       <h3 className="font-bold text-slate-400 text-lg">{mod.title}</h3>
-                      <p className="text-sm text-slate-400">Selesaikan modul sebelumnya.</p>
+                      <p className="text-sm text-slate-400">
+                        {isLevelLocked ? "Naikkan level kamu dulu." : "Selesaikan modul sebelumnya."}
+                      </p>
                     </div>
                   </div>
                 )}
