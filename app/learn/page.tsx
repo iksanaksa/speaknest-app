@@ -71,8 +71,11 @@ export default function LearnPage() {
             // Modul pertama dari level user otomatis kebuka
             const isFirstOfLevel = mod.level === userLevel && (index === 0 || modules[index - 1].level !== userLevel);
             
-            const isUnlocked = !isLevelLocked && (prevModDone || isFirstOfLevel);
+            const isUnlocked = !isLevelLocked && (prevModDone || isFirstOfLevel)
             const isDone = completed.includes(mod.id);
+             // Cek apakah semua modul di level saat ini udah selesai
+            const modulesInCurrentLevel = modules.filter(m => m.level === userLevel);
+            const isLevelComplete = modulesInCurrentLevel.every(m => completed.includes(m.id));
 
             return (
               <div key={mod.id} className="relative z-10 w-full flex justify-center">
@@ -107,6 +110,33 @@ export default function LearnPage() {
                         {isLevelLocked ? "Naikkan level kamu dulu." : "Selesaikan modul sebelumnya."}
                       </p>
                     </div>
+                  {/* TOMBOL UJIAN KENAIKAN LEVEL */}
+{userLevel !== "Mahir" && (
+  <div className="relative z-10 w-full flex justify-center mt-4">
+    {isLevelComplete ? (
+      <Link 
+        href="/learn/level-up"
+        className="w-full max-w-sm rounded-2xl border-2 border-purple-500 bg-purple-50 p-5 flex items-center gap-4 transition transform hover:-translate-y-1 shadow-lg shadow-purple-500/20"
+      >
+        <div className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-purple-500 text-white text-2xl animate-pulse">
+          🏆
+        </div>
+        <div>
+          <h3 className="font-bold text-purple-900 text-lg">Ujian Kenaikan Level!</h3>
+          <p className="text-sm text-purple-700">Kamu udah selesai semua modul. Lulus ujian ini untuk naik level!</p>
+        </div>
+      </Link>
+    ) : (
+      <div className="w-full max-w-sm rounded-2xl border-2 border-slate-200 bg-slate-50 p-5 flex items-center gap-4 opacity-70">
+        <div className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-slate-200 text-slate-400 text-2xl">🏆</div>
+        <div>
+          <h3 className="font-bold text-slate-400 text-lg">Ujian Kenaikan Level</h3>
+          <p className="text-sm text-slate-400">Selesaikan semua modul di level ini dulu.</p>
+        </div>
+      </div>
+    )}
+  </div>
+)}
                   </div>
                 )}
               </div>
