@@ -161,17 +161,38 @@ export default function PracticePage() {
     );
   }
 
-  if (isFinished) {
-    return (
-      <><Navbar /><main className="min-h-[80vh] flex flex-col items-center justify-center px-5">
+ // Tampilan Selesai
+if (isFinished) {
+  const hasWriting = !!unit?.content?.writing;
+  const hasSpeaking = !!unit?.content?.speaking;
+
+  return (
+    <>
+      <Navbar />
+      <main className="min-h-[80vh] flex flex-col items-center justify-center px-5 text-center">
         <div className="text-6xl mb-4">🎉</div>
-        <h1 className="text-3xl font-black text-slate-800 mb-2">Latihan Selesai!</h1>
+        <h1 className="text-3xl font-black text-slate-800 mb-2">Kuis Selesai!</h1>
         <p className="text-slate-500 mb-8">Kamu berhasil menjawab {score} dari {exercises.length} soal.</p>
-        <div className="bg-brand-50 text-brand-700 px-6 py-3 rounded-full font-bold text-lg mb-8 shadow-sm">+50 XP Didapatkan! ⭐</div>
-        <Link href="/learn" className="w-full max-w-xs text-center bg-brand-500 text-white font-bold py-3.5 rounded-xl hover:bg-brand-600 transition">Kembali ke Peta</Link>
-      </main></>
-    );
-  }
+        
+        <div className="flex flex-col gap-3 w-full max-w-xs">
+          {hasWriting && (
+            <Link href={`/learn/unit/${unitId}/writing`} className="w-full bg-blue-500 text-white font-bold py-3.5 rounded-xl hover:bg-blue-600 transition">
+              Lanjut ke Writing Task ✍️
+            </Link>
+          )}
+          {hasSpeaking && (
+            <Link href={`/learn/unit/${unitId}/speaking`} className="w-full bg-purple-500 text-white font-bold py-3.5 rounded-xl hover:bg-purple-600 transition">
+              Lanjut ke Speaking Task 🎤
+            </Link>
+          )}
+          <Link href="/learn" className="w-full bg-slate-200 text-slate-700 font-bold py-3.5 rounded-xl hover:bg-slate-300 transition">
+            Kembali ke Peta
+          </Link>
+        </div>
+      </main>
+    </>
+  );
+}
 
   return (
     <><Navbar /><main className="mx-auto max-w-lg px-5 py-10 flex flex-col min-h-[80vh]">

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 export async function POST(req: Request) {
   try {
-    const { essay } = await req.json();
+    const { essay, level } = await req.json();
 
     if (!essay) {
       return NextResponse.json({ error: "Esai tidak boleh kosong" }, { status: 400 });
@@ -13,21 +13,24 @@ export async function POST(req: Request) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`;
 
     const prompt = `
-      Kamu adalah penguji IELTS profesional. Berikan evaluasi untuk esai berikut:
-      "${essay}"
+  Kamu adalah penguji bahasa Inggris profesional. 
+  User ini sedang di level ${level || "Pemula"}. Berikan evaluasi yang sesuai dengan level tersebut (jangan terlalu keras jika masih pemula).
+  
+  Berikan evaluasi untuk teks berikut:
+  "${essay}"
 
-      Berikan jawaban dalam format JSON dengan struktur persis seperti ini:
-      {
-        "bandScore": (angka 1-9, misal 6.5),
-        "criteria": {
-          "taskResponse": "Penjelasan singkat 1-2 kalimat.",
-          "coherence": "Penjelasan singkat 1-2 kalimat.",
-          "lexical": "Penjelasan singkat 1-2 kalimat.",
-          "grammar": "Penjelasan singkat 1-2 kalimat."
-        },
-        "tips": "Satu saran praktis untuk meningkatkan skor."
-      }
-    `;
+  Berikan jawaban HANYA dalam format JSON seperti ini (tanpa teks lain di luar JSON):
+  {
+    "bandScore": (angka 1-9, misal 6.5),
+    "criteria": {
+      "taskResponse": "Penjelasan singkat 1-2 kalimat sesuai level user.",
+      "coherence": "Penjelasan singkat 1-2 kalimat.",
+      "lexical": "Penjelasan singkat 1-2 kalimat.",
+      "grammar": "Penjelasan singkat 1-2 kalimat."
+    },
+    "tips": "Satu saran praktis yang memotivasi."
+  }
+`;
 
     const response = await fetch(url, {
       method: 'POST',
