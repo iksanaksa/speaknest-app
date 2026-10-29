@@ -94,7 +94,14 @@ export default function PracticePage() {
       setIsFinished(true);
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
+        // 1. Kasih XP
         await addXP(50);
+        
+        // 2. Catat kalau unit ini udah selesai
+        await supabase.from("completed_units").insert({ 
+          user_id: user.id, 
+          unit_id: unitId 
+        });
       }
       setIsSaving(false);
     }
@@ -108,6 +115,7 @@ export default function PracticePage() {
     newBank.splice(index, 1);
     setBankWords(newBank);
   };
+  
   const handleRemoveWord = (word: string, index: number) => {
     if (status !== "idle") return;
     const newSelected = [...selectedWords];

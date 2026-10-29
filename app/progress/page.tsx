@@ -12,7 +12,7 @@ export default function ProgressPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchAllScores = async () => {
+    const fetchAllHistory = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
@@ -20,22 +20,45 @@ export default function ProgressPage() {
         return;
       }
 
-      // Ambil nilai Reading
+      // 1. Ambil nilai Reading
       const { data: readingData } = await supabase
         .from("practice_scores")
         .select("*")
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
-      // Ambil nilai Writing
+      // 2. Ambil nilai Writing
       const { data: writingData } = await supabase
         .from("writing_scores")
         .select("*")
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
-      // Gabungkan dan beri label tipe
+      // 3. Ambil data Unit yang selesai
+      const { data: completedUnits } = await supabase
+        .from("completed_units")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      // 4. Ambil detail judul unit dari tabel kurikulum
+      const { data: masterUnits } = await supabase
+        .from("curriculum_units")
+        .select("id, title, level");
+
+      // Gabungkan semuanya
       const combined = [
         ...(readingData || []).map(item => ({ ...item, type: "reading" })),
-        ...(writingData || []).map(item => ({ ...item, type: "writing" }))
+        ...(writingData || []).map(item => ({ ...item, type: "writing" })),
+        ...(completedUnits || []).map(item => {
+          const unitInfo = masterUnits?.find(u => u.id === item.unit_id);
+          return {
+            ...item,
+            type: "unit",
+            title: unitInfo?.title || "Materi Belajar",
+            level: unitInfo?.level || "A0"
+          }
+        })
       ];
 
       // Urutkan dari yang paling baru
@@ -45,7 +68,7 @@ export default function ProgressPage() {
       setLoading(false);
     };
 
-    fetchAllScores();
+    fetchAllHistory();
   }, [router]);
 
   return (
@@ -75,22 +98,37 @@ export default function ProgressPage() {
           </div>
         ) : (
           <div className="grid gap-4">
-            {history.map((item) => {
+            {history.map((item, index) => {
               const isReading = item.type === "reading";
+              const isWriting = item.type === "writing";
+              const isUnit = item.type === "unit";
+
+              // Atur ikon dan judul berdasarkan tipe
+              let icon = "📖";
+              let title = "Reading: History of Pizza";
+              let scoreDisplay = `${item.score} / ${item.total_questions}`;
+              let label = "SKOR";
+
+              if (isWriting) {
+                icon = "✍️";
+                title = item.feedback_json?.type === "speaking" ? "Speaking Simulation" : "Writing: AI Feedback";
+                scoreDisplay = item.band_score;
+                label = "BAND";
+              } else if (isUnit) {
+                icon = "🗺️";
+                title = `Materi Selesai: ${item.title}`;
+                scoreDisplay = item.level;
+                label = "LEVEL";
+              }
+
               return (
-                <div key={`${item.type}-${item.id}`} className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-6 shadow-sm hover:shadow-md transition">
+                <div key={`${item.type}-${item.id}-${index}`} className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-6 shadow-sm hover:shadow-md transition">
                   <div className="flex items-center gap-4">
                     <div className="grid h-12 w-12 place-items-center rounded-xl bg-brand-50 text-2xl">
-                      {isReading ? "📖" : item.feedback_json?.type === "speaking" ? "🎤" : "✍️"}
+                      {icon}
                     </div>
                     <div>
-                      <h3 className="font-bold text-slate-900">
-                        {isReading 
-                         ? "Reading: History of Pizza" 
-                           : item.feedback_json?.type === "speaking" 
-                             ? "Speaking Simulation" 
-                           : "Writing: AI Feedback"}
-                       </h3>
+                      <h3 className="font-bold text-slate-900">{title}</h3>
                       <p className="text-sm text-slate-500">
                         {new Date(item.created_at).toLocaleDateString('id-ID', {
                           weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
@@ -100,11 +138,11 @@ export default function ProgressPage() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-2xl font-black text-brand-600">
-                      {isReading ? `${item.score} / ${item.total_questions}` : item.band_score}
+                    <p className={`font-black text-brand-600 ${isUnit ? 'text-lg' : 'text-2xl'}`}>
+                      {scoreDisplay}
                     </p>
                     <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                      {isReading ? "Skor" : "Band"}
+                      {label}
                     </p>
                   </div>
                 </div>
