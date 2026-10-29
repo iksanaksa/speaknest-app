@@ -23,7 +23,7 @@ export default function LearnPage() {
         if (completed) setCompletedUnits(completed.map(c => c.unit_id));
       }
 
-      const { data: unitsData } = await supabase.from("curriculum_units").select("*").order("id", { ascending: true });
+      const { data: unitsData } = await supabase.from("curriculum_units").select("*").order("created_at", { ascending: true })
       if (unitsData) setUnits(unitsData);
       
       setLoading(false);
